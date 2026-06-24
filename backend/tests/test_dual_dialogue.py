@@ -43,11 +43,11 @@ def test_group_by_line_outside_tolerance():
 def test_detect_dual_dialogue_two_characters_same_line():
     """Two character cues on the same line = dual dialogue."""
     words = [
-        make_word("VINCENT", 170.0, 100.0),
-        make_word("JULES",   350.0, 100.0),
-        make_word("You",     170.0, 115.0),
-        make_word("sure?",   170.0, 115.0),
-        make_word("Yeah.",   350.0, 115.0),
+        make_word("VINCENT", 190.0, 100.0),  # was 170.0 - now within 180-380 range
+        make_word("JULES",   370.0, 100.0),  # was 350.0 - now within 180-380 range
+        make_word("You",     190.0, 115.0),
+        make_word("sure?",   190.0, 115.0),
+        make_word("Yeah.",   370.0, 115.0),
     ]
     sections = detect_dual_dialogue_sections(words)
     assert len(sections) == 1
@@ -80,8 +80,8 @@ def test_detect_no_dual_dialogue_close_x():
 def test_detect_dual_dialogue_gap_exactly_at_threshold():
     """Gap exactly at DUAL_DIALOGUE_MIN_X_GAP should be detected."""
     words = [
-        make_word("VINCENT", 170.0, 100.0),
-        make_word("JULES",   170.0 + DUAL_DIALOGUE_MIN_X_GAP, 100.0),
+        make_word("VINCENT", 190.0, 100.0),
+        make_word("JULES",   190.0 + DUAL_DIALOGUE_MIN_X_GAP, 100.0),
     ]
     sections = detect_dual_dialogue_sections(words)
     assert len(sections) == 1
