@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 # Minimum horizontal separation between two character cues
 # to be considered dual dialogue columns (in points)
-DUAL_DIALOGUE_MIN_X_GAP = 100.0
+DUAL_DIALOGUE_MIN_X_GAP = 150.0
 
 # Tolerance for grouping words on the same line (in points)
 LINE_TOP_TOLERANCE = 5.0
@@ -37,16 +37,14 @@ def group_by_line(words: list[dict]) -> dict[float, list[dict]]:
 
     return lines
 
-
 def detect_dual_dialogue_sections(words: list[dict]) -> list[tuple[float, float]]:
     """
     Detect vertical ranges on a page that contain dual dialogue.
 
-    A dual dialogue section is identified when two character cues appear
-    on the same line (same top value) with x0 positions separated by
-    at least DUAL_DIALOGUE_MIN_X_GAP points.
-
-    Returns list of (top_start, top_end) tuples for each dual dialogue section.
+    Both character cues must be in the core character x-range (180-380pt),
+    must not contain parentheses (which indicate scene sub-headings),
+    and the line must not contain more than 4 all-caps words total
+    (scene headings tend to have many words).
     """
     lines = group_by_line(words)
     dual_sections = []
@@ -56,31 +54,38 @@ def detect_dual_dialogue_sections(words: list[dict]) -> list[tuple[float, float]
     for top in sorted_tops:
         line_words = lines[top]
 
-        # Find words that look like character cues on this line
+        # Skip lines with too many words - scene headings are verbose
+        if len(line_words) > 5:
+            continue
+
+        # Skip lines containing parentheses - scene sub-headings use them
+        line_text = ' '.join(w['text'] for w in line_words)
+        if '(' in line_text or ')' in line_text:
+            continue
+
+        # Both candidates must be in the core character cue x-range
         char_candidates = [
             w for w in line_words
             if w['text'].isupper()
             and len(w['text']) > 1
             and len(w['text']) <= 35
+            and 180.0 <= w['x0'] <= 380.0
+            and '(' not in w['text']
+            and ')' not in w['text']
         ]
 
         if len(char_candidates) < 2:
             continue
 
-        # Check if any two candidates are separated by enough horizontal space
         x_positions = sorted(set(round(w['x0']) for w in char_candidates))
 
         for i in range(len(x_positions)):
             for j in range(i + 1, len(x_positions)):
                 if x_positions[j] - x_positions[i] >= DUAL_DIALOGUE_MIN_X_GAP:
-                    # Found a dual dialogue header line
-                    # The section runs from this top to the next character cue
-                    # or scene heading (approximate: next 150 points)
                     dual_sections.append((top, top + 150.0))
                     break
 
     return dual_sections
-
 
 def split_dual_dialogue_columns(
     words: list[dict],
