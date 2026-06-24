@@ -9,6 +9,8 @@ const useCompareStore = create((set) => ({
   graphDataB: null,
   errorA: null,
   errorB: null,
+  filenameA: '',
+  filenameB: '',
   syncFilters: false,
 
   setSessionA: (sessionA) => set({ sessionA }),
@@ -19,12 +21,15 @@ const useCompareStore = create((set) => ({
   setGraphDataB: (graphDataB) => set({ graphDataB }),
   setErrorA: (errorA) => set({ errorA, statusA: 'error' }),
   setErrorB: (errorB) => set({ errorB, statusB: 'error' }),
+  setFilenameA: (filenameA) => set({ filenameA }),
+  setFilenameB: (filenameB) => set({ filenameB }),
   toggleSyncFilters: () => set((state) => ({ syncFilters: !state.syncFilters })),
   reset: () => set({
     sessionA: null, sessionB: null,
     statusA: 'idle', statusB: 'idle',
     graphDataA: null, graphDataB: null,
     errorA: null, errorB: null,
+    filenameA: '', filenameB: '',
     syncFilters: false,
   }),
 }))
