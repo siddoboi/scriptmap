@@ -9,11 +9,10 @@ from app.parser.block_classifier import classify_line, strip_character_suffixes
 from app.parser.normalizer import (
     repair_encoding, normalize_whitespace,
     is_header_footer, normalize_character_name,
-    detect_repeating_headers, strip_repeating_headers,
+    detect_repeating_headers,
 )
 from app.parser.dual_dialogue import (
     detect_dual_dialogue_sections,
-    split_dual_dialogue_columns,
 )
 from app.utils.text_layer import detect_text_layer
 
