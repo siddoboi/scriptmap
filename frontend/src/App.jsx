@@ -39,21 +39,30 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
 
+      {/* Nav */}
       <nav className="sticky top-0 z-40 flex items-center justify-between px-8 py-4 border-b border-slate"
         style={{ backgroundColor: 'var(--color-void)' }}>
         <span className="text-parchment font-bold text-xl tracking-tight">ScriptMap</span>
+
         <div className="flex items-center gap-4">
           {(status === 'graph_ready' || compareReady) && (
-            <button onClick={handleNewAnalysis}
-              className="text-dusk text-sm hover:text-parchment transition-colors">
+            <button
+              onClick={handleNewAnalysis}
+              className="text-dusk text-sm hover:text-parchment
+                transition-colors duration-150 active:scale-95">
               New Analysis
             </button>
           )}
           <div className="flex items-center gap-2">
             {['single', 'compare'].map((m) => (
-              <button key={m} onClick={() => handleModeSwitch(m)}
-                className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
-                  mode === m ? 'text-white' : 'text-dusk hover:text-parchment'
+              <button
+                key={m}
+                onClick={() => handleModeSwitch(m)}
+                className={`px-4 py-1.5 rounded text-sm font-medium
+                  transition-all duration-150 active:scale-95 ${
+                  mode === m
+                    ? 'text-white'
+                    : 'text-dusk hover:text-parchment hover:bg-white/5'
                 }`}
                 style={mode === m ? { backgroundColor: 'var(--color-ember)' } : {}}>
                 {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -63,19 +72,24 @@ export default function App() {
         </div>
       </nav>
 
+      {/* Overlays */}
       {status === 'uploading' && <LoadingSpinner />}
       {status === 'alias_review' && <AliasReview />}
 
       {/* Single mode - graph ready */}
       {mode === 'single' && status === 'graph_ready' && graphData && (
-        <div className="flex flex-1 gap-4 p-4 overflow-hidden" style={{ height: 'calc(100vh - 65px)' }}>
+        <div className="flex flex-1 gap-4 p-4 overflow-hidden"
+          style={{ height: 'calc(100vh - 65px)' }}>
           <GraphControls />
           <div className="flex flex-col flex-1 overflow-hidden">
+
+            {/* Tabs */}
             <div className="flex gap-6 mb-3 border-b border-slate pb-2">
               {['graph', 'sentiment'].map(tab => (
-                <button key={tab}
+                <button
+                  key={tab}
                   onClick={() => useGraphStore.getState().setActiveTab(tab)}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-all duration-150 active:scale-95 ${
                     activeTab === tab
                       ? 'text-parchment border-b-2 border-ember pb-2 -mb-[10px]'
                       : 'text-dusk hover:text-parchment pb-2'
@@ -84,6 +98,7 @@ export default function App() {
                 </button>
               ))}
             </div>
+
             <div className="flex-1 rounded-lg overflow-hidden">
               {activeTab === 'graph' ? <GraphView /> : <SentimentArc />}
             </div>
@@ -109,13 +124,16 @@ export default function App() {
                 Upload a screenplay to visualise its character network and emotional arcs.
               </p>
             </div>
+
             <UploadZone />
+
             {error && (
               <ErrorBanner
                 error={error}
                 onDismiss={() => { setError(null); setStatus('idle') }}
               />
             )}
+
             <div className="flex gap-6 text-dusk text-sm">
               <span>PDF or FDX</span>
               <span>&middot;</span>
