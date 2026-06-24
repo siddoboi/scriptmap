@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useGraphStore from './store/graphStore'
+import useCompareStore from './store/compareStore'
 import UploadZone from './components/upload/UploadZone'
 import LoadingSpinner from './components/shared/LoadingSpinner'
 import ErrorBanner from './components/shared/ErrorBanner'
@@ -7,22 +8,32 @@ import AliasReview from './components/upload/AliasReview'
 import GraphView from './components/graph/GraphView'
 import GraphControls from './components/graph/GraphControls'
 import SentimentArc from './components/sentiment/SentimentArc'
+import CompareUpload from './components/compare/CompareUpload'
+import CompareView from './components/compare/CompareView'
 
 export default function App() {
   const [mode, setMode] = useState('single')
+  const [compareReady, setCompareReady] = useState(false)
   const { status, error, graphData, activeTab, reset, setError, setStatus } = useGraphStore()
+  const { reset: resetCompare } = useCompareStore()
 
   const handleModeSwitch = (newMode) => {
     if (newMode === mode) return
-    if (status === 'graph_ready') {
+    if (status === 'graph_ready' || compareReady) {
       if (!window.confirm('Switching modes will clear your current graph. Continue?')) return
     }
     reset()
+    resetCompare()
+    setCompareReady(false)
     setMode(newMode)
   }
 
   const handleNewAnalysis = () => {
-    if (window.confirm('This will clear your current graph. Continue?')) reset()
+    if (window.confirm('This will clear your current graph. Continue?')) {
+      reset()
+      resetCompare()
+      setCompareReady(false)
+    }
   }
 
   return (
@@ -32,7 +43,7 @@ export default function App() {
         style={{ backgroundColor: 'var(--color-void)' }}>
         <span className="text-parchment font-bold text-xl tracking-tight">ScriptMap</span>
         <div className="flex items-center gap-4">
-          {status === 'graph_ready' && (
+          {(status === 'graph_ready' || compareReady) && (
             <button onClick={handleNewAnalysis}
               className="text-dusk text-sm hover:text-parchment transition-colors">
               New Analysis
@@ -55,22 +66,20 @@ export default function App() {
       {status === 'uploading' && <LoadingSpinner />}
       {status === 'alias_review' && <AliasReview />}
 
-      {status === 'graph_ready' && graphData && (
+      {/* Single mode - graph ready */}
+      {mode === 'single' && status === 'graph_ready' && graphData && (
         <div className="flex flex-1 gap-4 p-4 overflow-hidden" style={{ height: 'calc(100vh - 65px)' }}>
           <GraphControls />
           <div className="flex flex-col flex-1 overflow-hidden">
-            {/* Tabs */}
             <div className="flex gap-6 mb-3 border-b border-slate pb-2">
               {['graph', 'sentiment'].map(tab => (
-                <button
-                  key={tab}
+                <button key={tab}
                   onClick={() => useGraphStore.getState().setActiveTab(tab)}
                   className={`text-sm font-medium transition-colors ${
                     activeTab === tab
                       ? 'text-parchment border-b-2 border-ember pb-2 -mb-[10px]'
                       : 'text-dusk hover:text-parchment pb-2'
-                  }`}
-                >
+                  }`}>
                   {tab === 'graph' ? 'Graph' : 'Sentiment Arc'}
                 </button>
               ))}
@@ -82,7 +91,14 @@ export default function App() {
         </div>
       )}
 
-      {(status === 'idle' || status === 'error') && (
+      {/* Compare mode */}
+      {mode === 'compare' && !compareReady && (
+        <CompareUpload onBothReady={() => setCompareReady(true)} />
+      )}
+      {mode === 'compare' && compareReady && <CompareView />}
+
+      {/* Landing */}
+      {mode === 'single' && (status === 'idle' || status === 'error') && (
         <main className="flex flex-col items-center px-8 py-16">
           <div className="flex flex-col items-center gap-8 w-full max-w-xl">
             <div className="text-center">
