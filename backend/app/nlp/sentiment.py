@@ -16,23 +16,9 @@ def score_line(text: str) -> float:
 def score_script(script_data) -> dict[str, list[dict]]:
     """
     Score all dialogue lines in a ScriptData object and build sentiment arcs.
-
-    For each character, produces a list of SentimentPoint dicts:
-        {page: int, score: float, raw: float}
-
-    Where:
-        raw   = VADER compound score for that single line
-        score = rolling average over a window of recent lines (smoothed arc)
-
-    Args:
-        script_data: ScriptData object (already parsed)
-
-    Returns:
-        dict mapping character name -> list of sentiment points
     """
     from collections import defaultdict
 
-    # Collect all dialogue lines per character, sorted by page
     char_lines: dict[str, list[dict]] = defaultdict(list)
 
     for scene in script_data.scenes:
@@ -43,8 +29,7 @@ def score_script(script_data) -> dict[str, list[dict]]:
                 'raw':  raw_score,
             })
 
-    # Store scores on the DialogueLine objects too
-    line_index = 0
+    # Store scores on DialogueLine objects
     for scene in script_data.scenes:
         for line in scene.dialogue:
             line.sentiment = score_line(line.text)
@@ -53,21 +38,19 @@ def score_script(script_data) -> dict[str, list[dict]]:
     arcs: dict[str, list[dict]] = {}
 
     for character, lines in char_lines.items():
-        # Sort by page
-        lines.sort(key=lambda l: l['page'])
+        lines.sort(key=lambda item: item['page'])
 
-        # Rolling average with window=5
         smoothed = _rolling_average(
-            [l['raw'] for l in lines],
+            [item['raw'] for item in lines],
             window=5
         )
 
         arc = []
-        for i, line in enumerate(lines):
+        for i, entry in enumerate(lines):
             arc.append({
-                'page':  line['page'],
+                'page':  entry['page'],
                 'score': round(smoothed[i], 4),
-                'raw':   round(line['raw'], 4),
+                'raw':   round(entry['raw'], 4),
             })
 
         arcs[character] = arc
