@@ -1,122 +1,108 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import useGraphStore from './store/graphStore'
+import UploadZone from './components/upload/UploadZone'
+import LoadingSpinner from './components/shared/LoadingSpinner'
+import ErrorBanner from './components/shared/ErrorBanner'
+import AliasReview from './components/upload/AliasReview'
+import GraphView from './components/graph/GraphView'
+import GraphControls from './components/graph/GraphControls'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [mode, setMode] = useState('single')
+  const { status, error, graphData, reset, setError, setStatus } = useGraphStore()
+
+  const handleModeSwitch = (newMode) => {
+    if (newMode === mode) return
+    if (status === 'graph_ready') {
+      if (!window.confirm('Switching modes will clear your current graph. Continue?')) return
+    }
+    reset()
+    setMode(newMode)
+  }
+
+  const handleNewAnalysis = () => {
+    if (window.confirm('This will clear your current graph. Continue?')) {
+      reset()
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
 
-      <div className="ticks"></div>
+      {/* Top navigation */}
+      <nav className="sticky top-0 z-40 flex items-center justify-between px-8 py-4 border-b border-slate"
+        style={{ backgroundColor: 'var(--color-void)' }}>
+        <span className="text-parchment font-bold text-xl tracking-tight">ScriptMap</span>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="flex items-center gap-4">
+          {status === 'graph_ready' && (
+            <button onClick={handleNewAnalysis}
+              className="text-dusk text-sm hover:text-parchment transition-colors">
+              New Analysis
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            {['single', 'compare'].map((m) => (
+              <button key={m} onClick={() => handleModeSwitch(m)}
+                className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+                  mode === m ? 'text-white' : 'text-dusk hover:text-parchment'
+                }`}
+                style={mode === m ? { backgroundColor: 'var(--color-ember)' } : {}}>
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </nav>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {/* Loading overlay */}
+      {status === 'uploading' && <LoadingSpinner />}
+
+      {/* Alias review modal */}
+      {status === 'alias_review' && <AliasReview />}
+
+      {/* Graph view */}
+      {status === 'graph_ready' && graphData && (
+        <div className="flex flex-1 gap-4 p-4 overflow-hidden" style={{ height: 'calc(100vh - 65px)' }}>
+          <GraphControls />
+          <div className="flex-1 rounded-lg overflow-hidden">
+            <GraphView />
+          </div>
+        </div>
+      )}
+
+      {/* Landing */}
+      {(status === 'idle' || status === 'error') && (
+        <main className="flex flex-col items-center px-8 py-16">
+          <div className="flex flex-col items-center gap-8 w-full max-w-xl">
+            <div className="text-center">
+              <h1 className="text-parchment text-3xl font-bold mb-2">
+                Every character. Every connection.
+              </h1>
+              <p className="text-dusk text-base">
+                Upload a screenplay to visualise its character network and emotional arcs.
+              </p>
+            </div>
+
+            <UploadZone />
+
+            {error && (
+              <ErrorBanner
+                error={error}
+                onDismiss={() => { setError(null); setStatus('idle') }}
+              />
+            )}
+
+            <div className="flex gap-6 text-dusk text-sm">
+              <span>PDF or FDX</span>
+              <span>&middot;</span>
+              <span>Sentiment arcs</span>
+              <span>&middot;</span>
+              <span>Compare mode</span>
+            </div>
+          </div>
+        </main>
+      )}
+    </div>
   )
 }
-
-export default App
