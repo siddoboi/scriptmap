@@ -25,6 +25,10 @@ def _group_words_into_lines(words: list[dict]) -> list[dict]:
     """
     Group pdfplumber word dicts into logical lines by top position.
     Returns list of line dicts: {text, x0, top, words}
+
+    Special handling: standalone scene numbers (single digits/short numbers)
+    at the far left or right margin are excluded from x0 calculation so they
+    don't pull the line's x0 away from the content position.
     """
     if not words:
         return []
@@ -51,12 +55,25 @@ def _group_words_into_lines(words: list[dict]) -> list[dict]:
             lines[matched_key]['words'].append(word)
             lines[matched_key]['text'] += ' ' + word['text']
 
-    # Sort by top position and re-sort words within each line by x0
-    result = []
+    # Sort by top position, re-sort words within each line by x0
+    # and compute content x0 (excluding scene numbers at margins)
+        result = []
     for key in sorted(lines.keys()):
         line = lines[key]
         line['words'].sort(key=lambda w: w['x0'])
-        line['text'] = ' '.join(w['text'] for w in line['words'])
+
+        # Compute content x0: skip leading standalone numbers at margins
+        content_words = [
+            w for w in line['words']
+            if not (w['text'].isdigit() and w['x0'] < 80)
+            and not (w['text'].isdigit() and w['x0'] > 500)
+        ]
+        if content_words:
+            line['x0'] = content_words[0]['x0']
+
+        # Rebuild text excluding margin scene numbers
+        line['text'] = ' '.join(w['text'] for w in content_words) if content_words else ''
+
         result.append(line)
 
     return result
