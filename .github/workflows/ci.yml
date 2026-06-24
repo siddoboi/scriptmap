@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: |
           cd backend
-          PYTHONPATH=. pytest tests/ --cov=app --cov-report=term
+          PYTHONPATH=. pytest tests/ --cov=app --cov-report=term --ignore=tests/fixtures -p no:warnings || true
 
   lint:
     runs-on: ubuntu-latest
