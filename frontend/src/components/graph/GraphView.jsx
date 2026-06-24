@@ -1,12 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import useGraphStore from '../../store/graphStore'
+import NodeTooltip from './NodeTooltip'
 
 const COLOR_SCALE = d3.schemeTableau10
 
 export default function GraphView() {
   const svgRef = useRef(null)
   const simulationRef = useRef(null)
+  const [tooltip, setTooltip] = useState({ node: null, position: { x: 0, y: 0 } })
   const { graphData, activeAct } = useGraphStore()
 
   useEffect(() => {
@@ -18,7 +20,6 @@ export default function GraphView() {
     const width = svgRef.current.clientWidth || 800
     const height = svgRef.current.clientHeight || 600
 
-    // Filter by active act
     const visibleNodes = activeAct === 'all'
       ? graphData.nodes.map(n => ({ ...n }))
       : graphData.nodes
@@ -32,14 +33,12 @@ export default function GraphView() {
 
     if (visibleNodes.length === 0) return
 
-    // Scales
     const maxLines = d3.max(visibleNodes, n => n.line_count) || 1
     const nodeRadius = d3.scaleSqrt().domain([0, maxLines]).range([8, 40])
 
     const maxWeight = d3.max(visibleEdges, e => e.weight) || 1
     const edgeWidth = d3.scaleLinear().domain([1, maxWeight]).range([1, 4])
 
-    // Zoom container
     const g = svg.append('g')
     svg.call(
       d3.zoom()
@@ -47,7 +46,6 @@ export default function GraphView() {
         .on('zoom', (event) => g.attr('transform', event.transform))
     )
 
-    // Force simulation - must be created before drawing
     const simulation = d3.forceSimulation(visibleNodes)
       .force('link', d3.forceLink(visibleEdges)
         .id(d => d.id)
@@ -60,7 +58,6 @@ export default function GraphView() {
 
     simulationRef.current = simulation
 
-    // Draw edges AFTER simulation has linked source/target objects
     const edgeGroup = g.append('g')
     const nodeGroup = g.append('g')
 
@@ -75,6 +72,26 @@ export default function GraphView() {
       .data(visibleNodes)
       .join('g')
       .attr('cursor', 'grab')
+      .on('mouseenter', (event, d) => {
+        setTooltip({ node: d, position: { x: event.clientX, y: event.clientY } })
+        // Highlight connected edges
+        edges
+          .attr('stroke-opacity', e =>
+            e.source.id === d.id || e.target.id === d.id ? 0.9 : 0.1
+          )
+          .attr('stroke', e =>
+            e.source.id === d.id || e.target.id === d.id ? '#C8522A' : '#5C5470'
+          )
+      })
+      .on('mousemove', (event) => {
+        setTooltip(prev => ({ ...prev, position: { x: event.clientX, y: event.clientY } }))
+      })
+      .on('mouseleave', () => {
+        setTooltip({ node: null, position: { x: 0, y: 0 } })
+        edges
+          .attr('stroke-opacity', 0.6)
+          .attr('stroke', '#5C5470')
+      })
       .call(
         d3.drag()
           .on('start', (event, d) => {
@@ -108,7 +125,6 @@ export default function GraphView() {
       .attr('font-family', 'Inter, sans-serif')
       .attr('pointer-events', 'none')
 
-    // Signature reveal
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (!prefersReducedMotion) {
       nodes.attr('opacity', 0)
@@ -124,7 +140,6 @@ export default function GraphView() {
         .attr('opacity', 1)
     }
 
-    // Tick handler
     simulation.on('tick', () => {
       edges
         .attr('x1', d => d.source.x)
@@ -135,14 +150,20 @@ export default function GraphView() {
       nodes.attr('transform', d => `translate(${d.x},${d.y})`)
     })
 
-    return () => simulation.stop()
+    return () => {
+      simulation.stop()
+      setTooltip({ node: null, position: { x: 0, y: 0 } })
+    }
   }, [graphData, activeAct])
 
   return (
-    <svg
-      ref={svgRef}
-      className="w-full h-full"
-      style={{ minHeight: '600px' }}
-    />
+    <div className="relative w-full h-full">
+      <svg
+        ref={svgRef}
+        className="w-full h-full"
+        style={{ minHeight: '600px' }}
+      />
+      <NodeTooltip node={tooltip.node} position={tooltip.position} />
+    </div>
   )
 }
