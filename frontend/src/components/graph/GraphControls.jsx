@@ -16,7 +16,6 @@ export default function GraphControls() {
     <div className="flex flex-col gap-6 w-60 shrink-0 py-4 px-4 rounded-lg"
       style={{ backgroundColor: 'var(--color-slate)' }}>
 
-      {/* Act filter */}
       <div>
         <p className="text-dusk text-xs font-semibold uppercase tracking-widest mb-3">
           Act Filter
@@ -26,10 +25,11 @@ export default function GraphControls() {
             <button
               key={value}
               onClick={() => setActiveAct(value)}
-              className={`text-left px-3 py-1.5 rounded text-sm transition-colors ${
+              className={`text-left px-3 py-1.5 rounded text-sm font-medium
+                transition-all duration-150 active:scale-95 ${
                 activeAct === value
-                  ? 'text-white font-medium'
-                  : 'text-dusk hover:text-parchment'
+                  ? 'text-white'
+                  : 'text-dusk hover:text-parchment hover:bg-white/5'
               }`}
               style={activeAct === value
                 ? { backgroundColor: 'var(--color-ember)' }
@@ -41,7 +41,6 @@ export default function GraphControls() {
         </div>
       </div>
 
-      {/* Stats */}
       <div>
         <p className="text-dusk text-xs font-semibold uppercase tracking-widest mb-3">
           Stats
