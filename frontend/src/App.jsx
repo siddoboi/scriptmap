@@ -39,6 +39,25 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
 
+      {/* Mobile warning */}
+      <div className="sm:hidden fixed inset-0 z-50 flex flex-col items-center
+        justify-center px-8 text-center"
+        style={{ backgroundColor: 'var(--color-void)' }}>
+        <p className="text-parchment text-lg font-bold mb-3">ScriptMap</p>
+        <p className="text-dusk text-sm leading-relaxed">
+          ScriptMap works best on a larger screen.
+          The graph is still interactive below, but some features
+          may be limited on mobile.
+        </p>
+        <button
+          onClick={e => e.currentTarget.parentElement.style.display = 'none'}
+          className="mt-6 px-6 py-2 rounded text-sm text-white font-medium
+            transition-all duration-150 active:scale-95"
+          style={{ backgroundColor: 'var(--color-ember)' }}>
+          Continue anyway
+        </button>
+      </div>
+      
       {/* Nav */}
       <nav className="sticky top-0 z-40 flex items-center justify-between px-8 py-4 border-b border-slate"
         style={{ backgroundColor: 'var(--color-void)' }}>
@@ -120,7 +139,7 @@ export default function App() {
               <h1 className="text-parchment text-3xl font-bold mb-2">
                 Every character. Every connection.
               </h1>
-              <p className="text-dusk text-base">
+              <p className="text-parchment/70 text-base">
                 Upload a screenplay to visualise its character network and emotional arcs.
               </p>
             </div>
