@@ -66,7 +66,7 @@ export default function UploadZone() {
         ${status === 'uploading' ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} aria-label="Upload a screenplay file - PDF or FDX format" />
       <div className="flex flex-col items-center gap-4 text-center">
         <svg className="w-10 h-10 text-dusk" fill="none" stroke="currentColor"
           strokeWidth={1.5} viewBox="0 0 24 24">
