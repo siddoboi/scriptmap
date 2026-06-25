@@ -17,11 +17,15 @@ const ERROR_MESSAGES = {
   },
   NETWORK_ERROR: {
     title: 'Could not reach the server',
-    body: 'The server may be waking up. Wait 30 seconds and try again.',
+    body: 'The server may be waking up from sleep. Wait 30 seconds and try again.',
   },
   INTERNAL_ERROR: {
     title: 'Something went wrong',
     body: 'An unexpected error occurred. Please try again.',
+  },
+  PARSE_ERROR: {
+    title: 'Could not parse this file',
+    body: 'The file may be corrupted or use an unsupported format variant.',
   },
 }
 
@@ -33,8 +37,13 @@ export default function ErrorBanner({ error, onRetry, onDismiss }) {
     body: error.message || 'An unexpected error occurred.',
   }
 
+  const isNetworkError = error.error_code === 'NETWORK_ERROR' ||
+                         error.error_code === 'INTERNAL_ERROR'
+
   return (
-    <div className="w-full max-w-xl mx-auto mt-4 rounded-lg overflow-hidden border border-red-900">
+    <div className="w-full max-w-xl mx-auto mt-4 rounded-lg overflow-hidden
+      border border-red-900 fade-in">
+
       <div className="px-4 py-3 flex items-start gap-3"
         style={{ backgroundColor: '#2A1020' }}>
 
@@ -50,20 +59,31 @@ export default function ErrorBanner({ error, onRetry, onDismiss }) {
         </div>
 
         {onDismiss && (
-          <button onClick={onDismiss}
-            className="text-red-400 hover:text-red-200 transition-colors text-lg leading-none">
+          <button
+            onClick={onDismiss}
+            className="text-red-400 hover:text-red-200 transition-colors
+              duration-150 text-lg leading-none active:scale-95">
             &times;
           </button>
         )}
       </div>
 
-      {onRetry && (
+      {(onRetry || isNetworkError) && (
         <div className="px-4 py-2 flex gap-3 border-t border-red-900"
           style={{ backgroundColor: '#200A16' }}>
-          <button onClick={onRetry}
-            className="text-sm text-red-300 hover:text-parchment transition-colors">
-            Try again
-          </button>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="text-sm text-red-300 hover:text-parchment
+                transition-colors duration-150 active:scale-95">
+              Try again
+            </button>
+          )}
+          {isNetworkError && (
+            <span className="text-red-900 text-sm">
+              If the server is cold-starting, wait 30s and retry.
+            </span>
+          )}
         </div>
       )}
     </div>
